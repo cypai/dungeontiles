@@ -44,7 +44,7 @@ class Invoke(Spell):
         return "Invoke"
 
     def description(self):
-        return "Casts 3u (Elemental). (Tap)."
+        return "Casts 3 (Elemental). (Tap)."
 
     def tile_reqs(self):
         return [(1, "I")]
@@ -57,18 +57,20 @@ class Invoke(Spell):
 
     def cast(self, tiles, state):
         element = tiles[0][0]
-        state.outgoing_effects.append((element, 3, False))
+        state.outgoing_effects.append([element, 3, False])
         self.tapped = True
 
     def new_turn(self):
         self.tapped = False
 
 class DualInvoke(Spell):
+    tapped = False
+
     def name(self):
         return "Dual Invoke"
 
     def description(self):
-        return "Casts 6u (Elemental). (Tap)."
+        return "Casts 6 (Elemental). (Tap)."
 
     def tile_reqs(self):
         return [(2, "I")]
@@ -78,14 +80,17 @@ class DualInvoke(Spell):
 
     def cast(self, tiles, state):
         element = tiles[0][0]
-        state.outgoing_effects.append((element, 6, False))
+        state.outgoing_effects.append([element, 6, False])
+
+    def new_turn(self):
+        self.tapped = False
 
 class ElementalBlast(Spell):
     def name(self):
         return "Elemental Blast"
 
     def description(self):
-        return "Casts 10u (Elemental) (AOE)."
+        return "Casts 10 (Elemental) (AOE)."
 
     def tile_reqs(self):
         return [(3, "I")]
@@ -95,14 +100,14 @@ class ElementalBlast(Spell):
 
     def cast(self, tiles, state):
         element = tiles[0][0]
-        state.outgoing_effects.append((element, 10, True))
+        state.outgoing_effects.append([element, 10, True])
 
 class ElementalStrike(Spell):
     def name(self):
         return "Elemental Strike"
 
     def description(self):
-        return "Casts 10u (Elemental)."
+        return "Casts 10 (Elemental)."
 
     def tile_reqs(self):
         return [(3, "S")]
@@ -112,7 +117,7 @@ class ElementalStrike(Spell):
 
     def cast(self, tiles, state):
         element = tiles[0][0]
-        state.outgoing_effects.append((element, 10, False))
+        state.outgoing_effects.append([element, 10, False])
 
 def find_identical(amount, hand):
     count = {}
@@ -160,33 +165,95 @@ def print_hand(hand):
     print(elements)
     print(numbers)
 
-def cast_spell(spell, tiles, state):
-    for tile in tiles:
-        state.hand.remove(tile)
-        state.used_mana.append(tile)
-    spell.cast(tiles, state)
-
 def run_turn(state):
     for spell in state.spells:
         spell.new_turn()
+    while len(state.hand) < 15:
+        state.hand.append(state.mana.pop())
     if len(state.incoming_effects) == 0:
-        print("%s casts for %su %s damage in %s turn(s)!" % (state.enemy_name, 9, "F", 2))
+        print("%s casts for %s %s damage in %s turn(s)!" % (state.enemy_name, 9, "F", 2))
         print("")
-        state.incoming_effects.append(("F", 9, 2))
+        state.incoming_effects.append(["F", 9, 2])
+    while True:
+        print_battle_status(state)
+        end_turn = main_menu(state)
+        if end_turn:
+            break
+    resolve_effects(state)
+
+def resolve_effects(state):
+    for outgoing in state.outgoing_effects:
+        state.enemy_hp -= outgoing[1]
+        print("%s takes %s %s damage!" % (state.enemy_name, outgoing[1], outgoing[0]))
+    state.outgoing_effects = []
+    if state.enemy_hp <= 0:
+        print("%s was defeated!" % state.enemy_name)
+        exit(0)
+    for incoming in state.incoming_effects:
+        incoming[2] -= 1
+        if incoming[2] == 0:
+            state.hp -= incoming[1]
+            print("You take %s %s damage!" % (incoming[1], incoming[0]))
+    state.incoming_effects = list(filter(lambda e: e[2] > 0, state.incoming_effects))
+    if state.hp <= 0:
+        print("You were defeated...")
+        exit(0)
+
+def main_menu(state):
+    menu_options = {}
+    index = 1
+    for spell in state.spells:
+        if len(spell.find_castable(state.hand)) > 0:
+            option = str(index) + ": " + spell.name()
+            menu_options[str(index)] = spell
+            print(option)
+            index += 1
+    print("e: End Turn")
+    while True:
+        choice = input(">> ")
+        if choice == "e":
+            return True
+        if choice in menu_options:
+            spell = menu_options[choice]
+            spell_menu(spell, state)
+            return False
+
+def spell_menu(spell, state):
+    menu_options = {}
+    index = 1
+    options = spell.find_castable(state.hand)
+    for option in options:
+        menu_options[str(index)] = option
+        print(str(index) + ": " + str(option))
+        index += 1
+    print("c: Cancel")
+    while True:
+        choice = input(">> ")
+        if choice == "c":
+            break
+        if choice in menu_options:
+            for tile in menu_options[choice]:
+                state.hand.remove(tile)
+                state.used_mana.append(tile)
+            spell.cast(menu_options[choice], state)
+            break
+
+def print_battle_status(state):
+    print(state.enemy_name)
     print("Enemy HP: " + str(state.enemy_hp))
+    print("")
     print("HP: " + str(state.hp))
     print("")
     print("Incoming:")
     for incoming in state.incoming_effects:
-        print("%s: %s (%s turns)" % incoming)
+        print("%s: %s (%s turns)" % tuple(incoming))
     print("")
     print("Outgoing:")
     for outgoing in state.outgoing_effects:
         print("%s: %s %s" % (outgoing[0], outgoing[1], "AOE" if outgoing[2] else ""))
     print("")
 
-    while len(state.hand) < 15:
-        state.hand.append(state.mana.pop())
+    print("Hand:")
     state.hand = sorted(state.hand)
     print_hand(state.hand)
     print("")
@@ -197,14 +264,10 @@ def run_turn(state):
             print(spell.name())
         print(spell.description())
         print("")
-    state.enemy_hp = 0
 
 def main():
     state = State()
     while True:
         run_turn(state)
-        if state.enemy_hp <= 0:
-            print("You win!")
-            break
 
 main()
