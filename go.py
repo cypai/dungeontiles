@@ -5,6 +5,8 @@ import pprint
 import random
 import itertools
 
+import enemies
+
 pp = pprint.PrettyPrinter(indent=2)
 
 keywords = {
@@ -172,14 +174,15 @@ def find_sequences(amount, hand):
 class State:
     mana = generate_mana()
     used_mana = []
+    open_mana = []
     hand = []
     hp = 50
-    enemy_name = "Flame Turtle"
-    enemy_hp = 30
+    enemy = enemies.FlameTurtle()
     outgoing_effects = []
     incoming_effects = []
     spells = [Invoke(), DualInvoke(), ElementalStrike(), ElementalBlast()]
     full_cast_spells = []
+    turn_number = 0
 
 def print_hand(hand):
     elements = " ".join(map(lambda e: e[0], hand))
@@ -191,15 +194,12 @@ def wait():
     input("")
 
 def run_turn(state):
+    state.turn_number += 1
     for spell in state.spells:
         spell.new_turn()
     while len(state.hand) < 15:
         state.hand.append(state.mana.pop())
-    if len(state.incoming_effects) == 0:
-        print("%s casts for %s %s damage in %s turn(s)!" % (state.enemy_name, 9, "F", 2))
-        print("")
-        state.incoming_effects.append(["F", 9, 2])
-        wait()
+    state.enemy.run_turn(state)
     while True:
         clear()
         print_battle_status(state)
@@ -210,12 +210,12 @@ def run_turn(state):
 
 def resolve_effects(state):
     for outgoing in state.outgoing_effects:
-        state.enemy_hp -= outgoing[1]
-        print("%s takes %s %s damage!" % (state.enemy_name, outgoing[1], outgoing[0]))
+        state.enemy.hp -= outgoing[1]
+        print("%s takes %s %s damage!" % (state.enemy.name, outgoing[1], outgoing[0]))
         wait()
     state.outgoing_effects = []
-    if state.enemy_hp <= 0:
-        print("%s was defeated!" % state.enemy_name)
+    if state.enemy.hp <= 0:
+        print("%s was defeated!" % state.enemy.name)
         exit(0)
     for incoming in state.incoming_effects:
         incoming[2] -= 1
@@ -268,8 +268,8 @@ def spell_menu(spell, state):
             break
 
 def print_battle_status(state):
-    print(state.enemy_name)
-    print("Enemy HP: " + str(state.enemy_hp))
+    print(state.enemy.name)
+    print("Enemy HP: " + str(state.enemy.hp))
     print("")
     print("HP: " + str(state.hp))
     print("")
@@ -280,6 +280,10 @@ def print_battle_status(state):
     print("Outgoing:")
     for outgoing in state.outgoing_effects:
         print("%s: %s %s" % (outgoing[0], outgoing[1], "AOE" if outgoing[2] else ""))
+    print("")
+
+    print("Open Discards:")
+    print_hand(state.open_mana)
     print("")
 
     print("Hand:")
@@ -300,7 +304,7 @@ def print_battle_status(state):
 def main():
     clear()
     state = State()
-    print("A %s approaches!" % state.enemy_name)
+    print("A %s approaches!" % state.enemy.name)
     while True:
         run_turn(state)
 
