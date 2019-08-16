@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 
+import os
 import pprint
 import random
 import itertools
 
 pp = pprint.PrettyPrinter(indent=2)
+
+def clear():
+    os.system("cls" if os.name == "nt" else "clear")
 
 def generate_mana():
     elements = ["F", "W", "E"]
@@ -171,6 +175,9 @@ def print_hand(hand):
     print(elements)
     print(numbers)
 
+def wait():
+    input("")
+
 def run_turn(state):
     for spell in state.spells:
         spell.new_turn()
@@ -180,7 +187,9 @@ def run_turn(state):
         print("%s casts for %s %s damage in %s turn(s)!" % (state.enemy_name, 9, "F", 2))
         print("")
         state.incoming_effects.append(["F", 9, 2])
+        wait()
     while True:
+        clear()
         print_battle_status(state)
         end_turn = main_menu(state)
         if end_turn:
@@ -191,6 +200,7 @@ def resolve_effects(state):
     for outgoing in state.outgoing_effects:
         state.enemy_hp -= outgoing[1]
         print("%s takes %s %s damage!" % (state.enemy_name, outgoing[1], outgoing[0]))
+        wait()
     state.outgoing_effects = []
     if state.enemy_hp <= 0:
         print("%s was defeated!" % state.enemy_name)
@@ -200,6 +210,7 @@ def resolve_effects(state):
         if incoming[2] == 0:
             state.hp -= incoming[1]
             print("You take %s %s damage!" % (incoming[1], incoming[0]))
+            wait()
     state.incoming_effects = list(filter(lambda e: e[2] > 0, state.incoming_effects))
     if state.hp <= 0:
         print("You were defeated...")
@@ -275,7 +286,9 @@ def print_battle_status(state):
         print("")
 
 def main():
+    clear()
     state = State()
+    print("A %s approaches!" % state.enemy_name)
     while True:
         run_turn(state)
 
