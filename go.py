@@ -5,6 +5,7 @@ import pprint
 import random
 import itertools
 
+import spells
 import enemies
 
 pp = pprint.PrettyPrinter(indent=2)
@@ -39,138 +40,6 @@ def generate_mana():
     random.shuffle(mana)
     return mana
 
-class Spell:
-    def name(self):
-        return ""
-
-    def description(self):
-        return ""
-
-    def tile_reqs(self):
-        """
-        (tile amount, I/S (identical/sequential))
-        """
-        return []
-
-    def find_castable(self, hand):
-        return []
-
-    def cast(self, tiles, state):
-        pass
-
-    def new_turn(self):
-        pass
-
-class Invoke(Spell):
-    tapped = False
-
-    def name(self):
-        return "Invoke"
-
-    def description(self):
-        return "Casts 3 (Elemental). (Tap)."
-
-    def tile_reqs(self):
-        return [(1, "I")]
-
-    def find_castable(self, hand):
-        if self.tapped:
-            return []
-        else:
-            return list(map(lambda t: [t], hand))
-
-    def cast(self, tiles, state):
-        element = tiles[0][0]
-        state.outgoing_effects.append([element, 3, False])
-        self.tapped = True
-
-    def new_turn(self):
-        self.tapped = False
-
-class DualInvoke(Spell):
-    tapped = False
-
-    def name(self):
-        return "Dual Invoke"
-
-    def description(self):
-        return "Casts 6 (Elemental). (Tap)."
-
-    def tile_reqs(self):
-        return [(2, "I")]
-
-    def find_castable(self, hand):
-        return find_identical(2, hand)
-
-    def cast(self, tiles, state):
-        element = tiles[0][0]
-        state.outgoing_effects.append([element, 6, False])
-
-    def new_turn(self):
-        self.tapped = False
-
-class ElementalBlast(Spell):
-    def name(self):
-        return "Elemental Blast"
-
-    def description(self):
-        return "Casts 10 (Elemental) (AOE)."
-
-    def tile_reqs(self):
-        return [(3, "I")]
-
-    def find_castable(self, hand):
-        return find_identical(3, hand)
-
-    def cast(self, tiles, state):
-        element = tiles[0][0]
-        state.outgoing_effects.append([element, 10, True])
-
-class ElementalStrike(Spell):
-    def name(self):
-        return "Elemental Strike"
-
-    def description(self):
-        return "Casts 10 (Elemental)."
-
-    def tile_reqs(self):
-        return [(3, "S")]
-
-    def find_castable(self, hand):
-        return find_sequences(3, hand)
-
-    def cast(self, tiles, state):
-        element = tiles[0][0]
-        state.outgoing_effects.append([element, 10, False])
-
-def find_identical(amount, hand):
-    count = {}
-    for tile in hand:
-        if tile in count:
-            count[tile] += 1
-        else:
-            count[tile] = 1
-    return list(map(lambda j: [j[0]] * amount, filter(lambda i: i[1] >= amount, count.items())))
-
-def find_sequences(amount, hand):
-    unique_hand = sorted(list(set(hand)))
-    sequences = {}
-    for i in range(len(unique_hand)):
-        tile = unique_hand[i]
-        sequences[tile] = [tile]
-        current_amount = 1
-        j = i + 1
-        k = 1
-        while current_amount < amount and j < len(unique_hand):
-            current_tile = unique_hand[j]
-            if current_tile == (tile[0], tile[1] + k):
-                sequences[tile].append(current_tile)
-            else:
-                break
-            j += 1
-            k += 1
-    return list(map(lambda j: j[1], filter(lambda i: len(i[1]) == amount, sequences.items())))
-
 class State:
     mana = generate_mana()
     used_mana = []
@@ -180,7 +49,7 @@ class State:
     enemy = enemies.FlameTurtle()
     outgoing_effects = []
     incoming_effects = []
-    spells = [Invoke(), DualInvoke(), ElementalStrike(), ElementalBlast()]
+    spells = [spells.Invoke(), spells.DualInvoke(), spells.Strike(), spells.Blast(), spells.Explosion()]
     full_cast_spells = []
     turn_number = 0
 
