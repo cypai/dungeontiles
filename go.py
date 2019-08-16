@@ -7,6 +7,18 @@ import itertools
 
 pp = pprint.PrettyPrinter(indent=2)
 
+keywords = {
+        "Elemental": "Element of the Components. Star or Life-types use the Absolute element.",
+        "Components": "The tiles used to cast the spell.",
+        "AOE": "Targets all enemies or all incoming effects.",
+        "Tap": "Can only be casted X times per turn.",
+        "Replace": "Draws another X tiles for use.",
+        "Open Discard": "Discard into the open draw pool.",
+        "Numeric": "The highest numeric value of the tile.",
+        "Rune": "Effect stays while the rune is not dispelled. Can be dispelled voluntarily.",
+        "Exhaust": "Can only be casted once per combat."
+        }
+
 def clear():
     os.system("cls" if os.name == "nt" else "clear")
 
