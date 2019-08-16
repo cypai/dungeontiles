@@ -11,7 +11,13 @@ def generate_mana():
     numbers = range(1, 10)
     mana = list(itertools.product(elements, numbers))
     mana *= 4
-    mana += [("P", 0)] * 32
+    mana += [("S", 0)] * 4 # Earth
+    mana += [("S", 3)] * 4 # Moon
+    mana += [("S", 6)] * 4 # Sun
+    mana += [("S", 9)] * 4 # Star
+    mana += [("L", 1)] * 4 # Mind
+    mana += [("L", 5)] * 4 # Life
+    mana += [("L", 9)] * 4 # Soul
     random.shuffle(mana)
     return mana
 
@@ -254,7 +260,10 @@ def print_battle_status(state):
     print("")
 
     print("Hand:")
-    state.hand = sorted(state.hand)
+    elemental_hand = sorted(filter(lambda t: t[0] in ("F", "W", "E"), state.hand))
+    star_hand = sorted(filter(lambda t: t[0] == "S", state.hand))
+    life_hand = sorted(filter(lambda t: t[0] == "L", state.hand))
+    state.hand = elemental_hand + star_hand + life_hand
     print_hand(state.hand)
     print("")
     for spell in state.spells:
