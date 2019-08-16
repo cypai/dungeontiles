@@ -14,7 +14,7 @@ keywords = {
         "Elemental": "Element of the Components. Star or Life-types use the Absolute element.",
         "Components": "The tiles used to cast the spell.",
         "AOE": "Targets all enemies or all incoming effects.",
-        "Tap": "Can only be casted X times per turn.",
+        "Repeatable": "Can be casted up to X additional times per turn.",
         "Replace": "Draws another X tiles for use.",
         "Open Discard": "Discard into the open draw pool.",
         "Numeric": "The highest numeric value of the tile.",
@@ -64,11 +64,20 @@ def wait():
 
 def run_turn(state):
     state.turn_number += 1
+    state.enemy.run_turn(state)
     for spell in state.spells:
+        spell.tapped = False
+        spell.repeatable_x = spell.repeatable_max
         spell.new_turn()
+    while len(state.hand) < 15 and len(state.open_mana) > 0:
+        clear()
+        sort_hand(state)
+        finish = draw_menu(state)
+        if finish:
+            break
     while len(state.hand) < 15:
         state.hand.append(state.mana.pop())
-    state.enemy.run_turn(state)
+    sort_hand(state)
     while True:
         clear()
         print_battle_status(state)
@@ -76,6 +85,39 @@ def run_turn(state):
         if end_turn:
             break
     resolve_effects(state)
+
+def sort_hand(state):
+    elemental_hand = sorted(filter(lambda t: t[0] in ("F", "W", "E"), state.hand))
+    star_hand = sorted(filter(lambda t: t[0] == "S", state.hand))
+    life_hand = sorted(filter(lambda t: t[0] == "L", state.hand))
+    state.hand = elemental_hand + star_hand + life_hand
+
+def draw_menu(state):
+    print("Open Discards:")
+    print_hand(state.open_mana)
+    print("")
+
+    print("Hand:")
+    print_hand(state.hand)
+    print("")
+    print("Draw from Open Discard set?")
+    print("")
+    menu_options = {}
+    index = 1
+    for tile in state.open_mana:
+        menu_options[str(index)] = tile
+        print("%s: %s %s" % (index, tile[0], tile[1]))
+        index += 1
+    print("s: Skip")
+    while True:
+        choice = input(">> ")
+        if choice == "s":
+            return True
+        if choice in menu_options:
+            tile = menu_options[choice]
+            state.open_mana.remove(tile)
+            state.hand.append(tile)
+            return False
 
 def resolve_effects(state):
     for outgoing in state.outgoing_effects:
@@ -101,7 +143,7 @@ def main_menu(state):
     menu_options = {}
     index = 1
     for spell in state.spells:
-        if len(spell.find_castable(state.hand)) > 0:
+        if not spell.tapped and len(spell.find_castable(state.hand)) > 0:
             option = str(index) + ": " + spell.name()
             menu_options[str(index)] = spell
             print(option)
@@ -134,6 +176,12 @@ def spell_menu(spell, state):
                 state.hand.remove(tile)
                 state.used_mana.append(tile)
             spell.cast(menu_options[choice], state)
+            if spell.repeatable:
+                spell.repeatable_x -= 1
+                if spell.repeatable_x == 0:
+                    spell.tapped = True
+            else:
+                spell.tapped = True
             break
 
 def print_battle_status(state):
@@ -156,17 +204,13 @@ def print_battle_status(state):
     print("")
 
     print("Hand:")
-    elemental_hand = sorted(filter(lambda t: t[0] in ("F", "W", "E"), state.hand))
-    star_hand = sorted(filter(lambda t: t[0] == "S", state.hand))
-    life_hand = sorted(filter(lambda t: t[0] == "L", state.hand))
-    state.hand = elemental_hand + star_hand + life_hand
     print_hand(state.hand)
     print("")
     for spell in state.spells:
-        if len(spell.find_castable(state.hand)) > 0:
-            print(spell.name() + " (Castable)")
+        if not spell.tapped and len(spell.find_castable(state.hand)) > 0:
+            print("%s %s (Castable)" % (spell.name(), spell.tile_reqs()))
         else:
-            print(spell.name())
+            print("%s %s" % (spell.name(), spell.tile_reqs()))
         print(spell.description())
         print("")
 
@@ -174,6 +218,8 @@ def main():
     clear()
     state = State()
     print("A %s approaches!" % state.enemy.name)
+    while len(state.hand) < 15:
+        state.hand.append(state.mana.pop())
     while True:
         run_turn(state)
 

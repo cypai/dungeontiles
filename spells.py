@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 
 class Spell:
+
+    def __init__(self):
+        self.tapped = False
+        self.repeatable = False
+        self.repeatable_max = 0
+        self.repeatable_x = 0
+        self.exhausted = False
+
     def name(self):
         return ""
 
@@ -23,34 +31,43 @@ class Spell:
         pass
 
 class Invoke(Spell):
-    tapped = False
-
     def name(self):
         return "Invoke"
 
     def description(self):
-        return "Casts 2 (Elemental). (Tap)."
+        return "Casts 2 (Elemental)."
 
     def tile_reqs(self):
         return [(1, "I")]
 
     def find_castable(self, hand):
-        if self.tapped:
-            return []
-        else:
-            return list(map(lambda t: [t], hand))
+        return list(map(lambda t: [t], hand))
 
     def cast(self, tiles, state):
         element = tiles[0][0]
         state.outgoing_effects.append([element, 1, False])
-        self.tapped = True
 
-    def new_turn(self):
-        self.tapped = False
+class QuickInvoke(Spell):
+    repeatable = True
+    repeatable_max = 1
+
+    def name(self):
+        return "Quick Invoke"
+
+    def description(self):
+        return "Casts 1 (Elemental). 1 (Repeatable)."
+
+    def tile_reqs(self):
+        return [(1, "I")]
+
+    def find_castable(self, hand):
+        return list(map(lambda t: [t], hand))
+
+    def cast(self, tiles, state):
+        element = tiles[0][0]
+        state.outgoing_effects.append([element, 1, False])
 
 class DualInvoke(Spell):
-    tapped = False
-
     def name(self):
         return "Dual Invoke"
 
@@ -67,9 +84,6 @@ class DualInvoke(Spell):
         element = tiles[0][0]
         state.outgoing_effects.append([element, 1, False])
         state.outgoing_effects.append([element, 1, False])
-
-    def new_turn(self):
-        self.tapped = False
 
 class Blast(Spell):
     def name(self):
@@ -89,10 +103,8 @@ class Blast(Spell):
         state.outgoing_effects.append([element, 5, True])
 
 class Explosion(Spell):
-    exhausted = False
-
     def name(self):
-        return "Blast"
+        return "Explosion"
 
     def description(self):
         return "Casts (Numeric)x3 (Elemental) (AOE). (Exhaust)."
