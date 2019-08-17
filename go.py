@@ -65,19 +65,20 @@ def wait():
 def run_turn(state):
     state.turn_number += 1
     state.enemy.run_turn(state)
+    state.open_mana = sorted_tiles(state.open_mana)
     for spell in state.spells:
         spell.tapped = False
         spell.repeatable_x = spell.repeatable_max
         spell.new_turn()
     while len(state.hand) < 15 and len(state.open_mana) > 0:
         clear()
-        sort_hand(state)
+        state.hand = sorted_tiles(state.hand)
         finish = draw_menu(state)
         if finish:
             break
     while len(state.hand) < 15:
         state.hand.append(state.mana.pop())
-    sort_hand(state)
+    state.hand = sorted_tiles(state.hand)
     while True:
         clear()
         print_battle_status(state)
@@ -86,11 +87,11 @@ def run_turn(state):
             break
     resolve_effects(state)
 
-def sort_hand(state):
-    elemental_hand = sorted(filter(lambda t: t[0] in ("F", "W", "E"), state.hand))
-    star_hand = sorted(filter(lambda t: t[0] == "S", state.hand))
-    life_hand = sorted(filter(lambda t: t[0] == "L", state.hand))
-    state.hand = elemental_hand + star_hand + life_hand
+def sorted_tiles(tiles):
+    elemental_hand = sorted(filter(lambda t: t[0] in ("F", "W", "E"), tiles))
+    star_hand = sorted(filter(lambda t: t[0] == "S", tiles))
+    life_hand = sorted(filter(lambda t: t[0] == "L", tiles))
+    return elemental_hand + star_hand + life_hand
 
 def draw_menu(state):
     print("Open Discards:")
@@ -232,6 +233,8 @@ def main():
     print("A %s approaches!" % state.enemy.name)
     while len(state.hand) < 15:
         state.hand.append(state.mana.pop())
+    while len(state.open_mana) < 9:
+        state.open_mana.append(state.mana.pop())
     state.enemy.status = {"Shield": 0}
     while True:
         run_turn(state)
