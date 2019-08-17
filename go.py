@@ -7,6 +7,7 @@ import itertools
 
 import spells
 import enemies
+import fullcast
 
 pp = pprint.PrettyPrinter(indent=2)
 
@@ -50,7 +51,8 @@ class State:
     outgoing_effects = []
     incoming_effects = []
     spells = [spells.Invoke(), spells.DualInvoke(), spells.Strike(), spells.Blast(), spells.Explosion()]
-    full_cast_spells = []
+    full_cast_spells = [fullcast.ClearIncoming(), fullcast.BasicFullCast(), fullcast.SequencePower(), fullcast.TriplePower()]
+    full_cast_damage = 0
     turn_number = 0
 
 def print_hand(hand):
@@ -97,7 +99,7 @@ def draw_menu(state):
     print_hand(state.open_mana)
     print("")
 
-    print("Hand:")
+    print("Hand (%s):" % len(state.hand))
     print_hand(state.hand)
     print("")
     print("Draw from Open Discard set?")
@@ -160,15 +162,43 @@ def main_menu(state):
             menu_options[str(index)] = spell
             print(option)
             index += 1
+    fc = can_full_cast(state.hand)
+    if fc:
+        print("f: Full Cast")
     print("e: End Turn")
     while True:
         choice = input(">> ")
         if choice == "e":
             return True
+        if fc and choice == "f":
+            state.full_cast_damage = 0
+            for fc_spell in state.full_cast_spells:
+                fc_spell.cast(state.hand, state)
+            state.outgoing_effects.append(["A", state.full_cast_damage, True])
+            state.used_mana += state.hand
+            state.hand = []
+            return True
         if choice in menu_options:
             spell = menu_options[choice]
             spell_menu(spell, state)
             return False
+
+def can_full_cast(hand):
+    if len(hand) % 3 != 0:
+        return False
+    sets = [hand[x:x+3] for x in range(0, len(hand), 3)]
+    for s in sets:
+        if not is_set(s):
+            return False
+    return True
+
+def is_set(tiles):
+    if tiles[0] == tiles[1] and tiles[0] == tiles[2]:
+        return True
+    if tiles[1][1] == tiles[0][1] + 1 and tiles[2][1] == tiles[0][1] + 2:
+        if tiles[0][0] == tiles[1][0] and tiles[0][0] == tiles[2][0]:
+            return True
+    return False
 
 def spell_menu(spell, state):
     menu_options = {}
@@ -215,7 +245,7 @@ def print_battle_status(state):
     print_hand(state.open_mana)
     print("")
 
-    print("Hand:")
+    print("Hand (%s):" % len(state.hand))
     print_hand(state.hand)
     print("")
     for spell in state.spells:
