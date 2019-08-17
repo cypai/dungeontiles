@@ -4,10 +4,11 @@ import itertools
 import random
 
 class Enemy:
-    name = ""
-    hp = 0
-    hp_max = 0
-    status = {}
+    def __init__(self):
+        name = ""
+        hp = 0
+        hp_max = 0
+        status = {"Shield": 0}
 
     def run_turn(self, state):
         pass
@@ -17,12 +18,11 @@ class FlameTurtle(Enemy):
     hp = 30
     hp_max = 30
 
-    status = {"Shield": 0}
-
     def run_turn(self, state):
         if state.turn_number % 2 == 0:
-            print("Flame Turtle defended itself.")
             self.status["Shield"] += 5
+            print("Flame Turtle defended itself. +5 Shield.")
+            print("Flame Turtle has %s Shield." % self.status["Shield"])
             ai_open_discard("L", state)
         else:
             ai_attack(self.name, "F", 9, 2, state)

@@ -111,7 +111,7 @@ def draw_menu(state):
     print("s: Skip")
     while True:
         choice = input(">> ")
-        if choice == "s":
+        if choice in ["s", "n"]:
             return True
         if choice in menu_options:
             tile = menu_options[choice]
@@ -121,9 +121,21 @@ def draw_menu(state):
 
 def resolve_effects(state):
     for outgoing in state.outgoing_effects:
-        state.enemy.hp -= outgoing[1]
-        print("%s takes %s %s damage!" % (state.enemy.name, outgoing[1], outgoing[0]))
-        wait()
+        damage = outgoing[1]
+        shield = state.enemy.status["Shield"]
+        if shield > 0:
+            if shield >= damage:
+                print("%s blocked %s damage!" % (state.enemy.name, damage))
+                state.enemy.status["Shield"] -= damage
+                damage = 0
+            else:
+                print("%s blocked %s damage!" % (state.enemy.name, shield))
+                state.enemy.status["Shield"] = 0
+                damage -= shield
+        if damage > 0:
+            state.enemy.hp -= damage
+            print("%s takes %s %s damage!" % (state.enemy.name, damage, outgoing[0]))
+            wait()
     state.outgoing_effects = []
     if state.enemy.hp <= 0:
         print("%s was defeated!" % state.enemy.name)
@@ -220,6 +232,7 @@ def main():
     print("A %s approaches!" % state.enemy.name)
     while len(state.hand) < 15:
         state.hand.append(state.mana.pop())
+    state.enemy.status = {"Shield": 0}
     while True:
         run_turn(state)
 
