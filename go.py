@@ -78,8 +78,14 @@ def run_turn(state):
         finish = draw_menu(state)
         if finish:
             break
+    first_elemental = False
     while len(state.hand) < 15:
-        state.hand.append(state.mana.pop())
+        tile = state.mana.pop()
+        if not first_elemental and tile[0] in ["F", "W", "E"]:
+            first_elemental = True
+            state.hand.append((tile[0], int(input("Set number for tile %s %s: " % tile))))
+        else:
+            state.hand.append(tile)
     state.hand = sorted_tiles(state.hand)
     while True:
         clear()
