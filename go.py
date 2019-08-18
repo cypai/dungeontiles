@@ -8,6 +8,7 @@ import itertools
 import spells
 import enemies
 import fullcast
+import encounters
 
 pp = pprint.PrettyPrinter(indent=2)
 
@@ -102,7 +103,7 @@ def run_turn(state):
         end_turn = main_menu(state)
         if end_turn:
             break
-    resolve_effects(state)
+    return resolve_effects(state)
 
 def sorted_tiles(tiles):
     elemental_hand = sorted(filter(lambda t: t[0] in ("F", "W", "E"), tiles))
@@ -157,7 +158,7 @@ def resolve_effects(state):
     state.outgoing_effects = []
     if state.enemy.hp <= 0:
         print("%s was defeated!" % state.enemy.name)
-        exit(0)
+        return True
     for incoming in state.incoming_effects:
         incoming[2] -= 1
         if incoming[2] == 0:
@@ -167,7 +168,8 @@ def resolve_effects(state):
     state.incoming_effects = list(filter(lambda e: e[2] > 0, state.incoming_effects))
     if state.hp <= 0:
         print("You were defeated...")
-        exit(0)
+        return True
+    return False
 
 def main_menu(state):
     menu_options = {}
@@ -272,17 +274,60 @@ def print_battle_status(state):
         print(spell.description())
         print("")
 
+def generate_rewards(character):
+    potential_rewards = spells.elementalist_rewards()
+    rewards = []
+    choice = random.choice(potential_rewards)
+    rewards.append(choice)
+    potential_rewards.remove(choice)
+    choice = random.choice(potential_rewards)
+    rewards.append(choice)
+    potential_rewards.remove(choice)
+    return rewards
+
+def rewards_menu(character):
+    print("Choose your reward!")
+    rewards = generate_rewards(character)
+    menu_options = {}
+    index = 1
+    for reward in rewards:
+        menu_options[str(index)] = reward
+        print("%s: %s" % (index, reward.name()))
+        index += 1
+    print("s: Skip")
+    while True:
+        choice = input(">> ")
+        if choice in ["s", "n"]:
+            return
+        if choice in menu_options:
+            reward = menu_options[choice]
+            character.spells.append(reward)
+            return
+
 def main():
     clear()
     character = Character()
-    state = State(character, enemies.FlameTurtle())
-    print("A %s approaches!" % state.enemy.name)
-    while len(state.hand) < 15:
-        state.hand.append(state.mana.pop())
-    while len(state.open_mana) < 9:
-        state.open_mana.append(state.mana.pop())
-    state.enemy.status = {"Shield": 0}
+    battles_cleared = 0
     while True:
-        run_turn(state)
+        if battles_cleared < 4:
+            encounter = encounters.generate_encounter()
+        else:
+            encounter = encounters.generate_hard_encounter()
+        state = State(character, encounter[0])
+        print("A %s approaches!" % state.enemy.name)
+        while len(state.hand) < 15:
+            state.hand.append(state.mana.pop())
+        while len(state.open_mana) < 9:
+            state.open_mana.append(state.mana.pop())
+        state.enemy.status = {"Shield": 0}
+        combat_finished = False
+        while not combat_finished:
+            combat_finished = run_turn(state)
+        character.hp = state.hp
+        if character.hp <= 0:
+            break
+        battles_cleared += 1
+        rewards_menu(character)
+        clear()
 
 main()

@@ -67,12 +67,31 @@ class QuickInvoke(Spell):
         element = tiles[0][0]
         state.outgoing_effects.append([element, 1, False])
 
+class Ground(Spell):
+    repeatable = True
+    repeatable_max = 2
+
+    def name(self):
+        return "Ground"
+
+    def description(self):
+        return "Discard. 2 (Repeatable)."
+
+    def tile_reqs(self):
+        return [(1, "I")]
+
+    def find_castable(self, hand):
+        return list(map(lambda t: [t], hand))
+
+    def cast(self, tiles, state):
+        pass
+
 class DualInvoke(Spell):
     def name(self):
         return "Dual Invoke"
 
     def description(self):
-        return "Casts 2 (Elemental) 2 times. (Tap)."
+        return "Casts 2 (Elemental) 2 times."
 
     def tile_reqs(self):
         return [(2, "I")]
@@ -168,3 +187,5 @@ def find_sequences(amount, hand):
             k += 1
     return list(map(lambda j: j[1], filter(lambda i: len(i[1]) == amount, sequences.items())))
 
+def elementalist_rewards():
+    return [QuickInvoke(), Ground(), DualInvoke(), Blast(), Strike(), Explosion()]
