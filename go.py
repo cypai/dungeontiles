@@ -41,19 +41,28 @@ def generate_mana():
     random.shuffle(mana)
     return mana
 
-class State:
-    mana = generate_mana()
-    used_mana = []
-    open_mana = []
-    hand = []
-    hp = 50
-    enemy = enemies.FlameTurtle()
-    outgoing_effects = []
-    incoming_effects = []
-    spells = [spells.Invoke(), spells.DualInvoke(), spells.Strike(), spells.Blast(), spells.Explosion()]
+class Character:
+    name = "Elementalist"
+    hp = 80
+    hp_max = 80
+    spells = [spells.Invoke(), spells.Strike(), spells.Blast()]
     full_cast_spells = [fullcast.ClearIncoming(), fullcast.BasicFullCast(), fullcast.SequencePower(), fullcast.TriplePower()]
-    full_cast_damage = 0
-    turn_number = 0
+
+class State:
+    def __init__(self, character, enemy):
+        self.mana = generate_mana()
+        self.used_mana = []
+        self.open_mana = []
+        self.hand = []
+        self.hp = character.hp
+        self.hp_max = character.hp_max
+        self.enemy = enemy
+        self.outgoing_effects = []
+        self.incoming_effects = []
+        self.spells = character.spells
+        self.full_cast_spells = character.full_cast_spells
+        self.full_cast_damage = 0
+        self.turn_number = 0
 
 def print_hand(hand):
     elements = " ".join(map(lambda e: e[0], hand))
@@ -265,7 +274,8 @@ def print_battle_status(state):
 
 def main():
     clear()
-    state = State()
+    character = Character()
+    state = State(character, enemies.FlameTurtle())
     print("A %s approaches!" % state.enemy.name)
     while len(state.hand) < 15:
         state.hand.append(state.mana.pop())
