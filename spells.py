@@ -45,7 +45,7 @@ class Invoke(Spell):
 
     def cast(self, tiles, state):
         element = tiles[0][0]
-        state.outgoing_effects.append([element, 1, False])
+        standard_target_menu(element, 2, state)
 
 class QuickInvoke(Spell):
     repeatable = True
@@ -65,7 +65,7 @@ class QuickInvoke(Spell):
 
     def cast(self, tiles, state):
         element = tiles[0][0]
-        state.outgoing_effects.append([element, 1, False])
+        standard_target_menu(element, 1, state)
 
 class Ground(Spell):
     repeatable = True
@@ -101,8 +101,8 @@ class DualInvoke(Spell):
 
     def cast(self, tiles, state):
         element = tiles[0][0]
-        state.outgoing_effects.append([element, 1, False])
-        state.outgoing_effects.append([element, 1, False])
+        standard_target_menu(element, 1, state)
+        standard_target_menu(element, 1, state)
 
 class Blast(Spell):
     def name(self):
@@ -157,7 +157,7 @@ class Strike(Spell):
 
     def cast(self, tiles, state):
         element = tiles[0][0]
-        state.outgoing_effects.append([element, 7, False])
+        standard_target_menu(element, 7, state)
 
 def find_identical(amount, hand):
     count = {}
@@ -186,6 +186,35 @@ def find_sequences(amount, hand):
             j += 1
             k += 1
     return list(map(lambda j: j[1], filter(lambda i: len(i[1]) == amount, sequences.items())))
+
+def standard_target_menu(element, damage, state):
+    print("Target?")
+    menu_options = {}
+    index = 1
+    for incoming in state.incoming_effects:
+        menu_options[str(index)] = incoming
+        print("%s: incoming %s %s (%s turns)" % (index, incoming[0], incoming[1], incoming[2]))
+        index += 1
+    enemy_index = index
+    menu_options[str(index)] = state.enemy
+    print("%s: %s" % (index, state.enemy.name))
+    while True:
+        choice = input(">> ")
+        if choice in menu_options:
+            target = menu_options[choice]
+            if int(choice) < enemy_index:
+                if damage > target[1]:
+                    print("Incoming attack was disrupted!")
+                    state.incoming_effects.remove(target)
+                else:
+                    print("Incoming attack decreased in power by %s." % damage)
+                    target[1] -= damage
+            else:
+                print("%s took %s %s damage!" % (target.name, damage, element))
+                target.hp -= damage
+            input("")
+            return
+
 
 def elementalist_rewards():
     return [QuickInvoke(), Ground(), DualInvoke(), Blast(), Strike(), Explosion()]
