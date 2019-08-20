@@ -5,17 +5,18 @@ import random
 
 class Enemy:
     def __init__(self):
-        name = ""
-        hp = 0
-        hp_max = 0
+        self.name = ""
+        self.hp = 0
+        self.hp_max = 0
 
     def run_turn(self, state, self_status):
         pass
 
 class FlameTurtle(Enemy):
-    name = "Flame Turtle"
-    hp = 30
-    hp_max = 30
+    def __init__(self):
+        self.name = "Flame Turtle"
+        self.hp = 30
+        self.hp_max = 30
 
     def run_turn(self, state, self_status):
         if state.turn_number % 2 == 0:
@@ -24,8 +25,81 @@ class FlameTurtle(Enemy):
             print("Flame Turtle has %s Shield." % self_status.shield)
             ai_open_discard("L", state)
         else:
-            ai_attack(self.name, "F", 9, 2, state)
+            ai_attack(self, self_status, "F", 9, 2, state)
             ai_open_discard("F", state)
+
+class Cow(Enemy):
+    def __init__(self):
+        self.name = "Cow"
+        self.hp = 50
+        self.hp_max = 50
+        self.rollout = 0
+
+    def run_turn(self, state, self_status):
+        if state.turn_number % 6 == 1:
+            print("Cow is preparing itself!")
+            self.rollout = 0
+            ai_open_discard("L", state)
+        else:
+            print("Cow uses Rollout!")
+            ai_attack(self, self_status, "L", 8 + self.rollout, 1, state)
+            ai_open_discard("L", state)
+            rollout += 3
+
+class Bull(Enemy):
+    def __init__(self):
+        self.name = "Bull"
+        self.hp = 60
+        self.hp_max = 60
+
+    def run_turn(self, state, self_status):
+        if state.turn_number % 6 == 1:
+            print("Bull uses Stampede!")
+            ai_attack(self, self_status, "L", 50, 9, state)
+            ai_open_discard("L", state)
+        else:
+            if len(state.incoming_effects) > 0:
+                print("The Stampede is coming closer!")
+            else:
+                print("The Bull is exhausted.")
+            ai_open_discard("L", state)
+
+class KillerRabbit(Enemy):
+    def __init__(self):
+        self.name = "Killer Rabbit"
+        self.hp = 25
+        self.hp_max = 25
+
+    def run_turn(self, state, self_status):
+        if state.turn_number % 3 > 0:
+            print("Killer Rabbit is preparing itself.")
+            ai_open_discard("L", state)
+        else:
+            print("Killer Rabbit uses Super Fang!")
+            ai_attack(self, self_status, "L", self.hp, 1, state)
+            ai_open_discard("L", state)
+
+class Wolf(Enemy):
+    def __init__(self):
+        self.name = "Wolf"
+        self.hp = random.randrange(20, 25)
+        self.hp_max = self.hp
+        self.begin = random.randrange(0, 2)
+
+    def run_turn(self, state, self_status):
+        self.begin += 1
+        if (self.begin + state.turn_number) % 3 == 0:
+            ai_attack(self, self_status, "L", 4, 2, state)
+            ai_open_discard("A", state)
+        elif (self.begin + state.turn_number) % 3 == 1:
+            ai_attack(self, self_status, "L", 3, 1, state)
+            ai_open_discard("A", state)
+        else:
+            print("Wolf uses Howl! All wolves gain 2 Strength!")
+            for enemy in state.enemies:
+                if enemy[0].name == "Wolf":
+                    enemy[1].strength += 2
+            ai_open_discard("L", state)
 
 class Slime(Enemy):
     def __init__(self):
@@ -37,10 +111,10 @@ class Slime(Enemy):
     def run_turn(self, state, self_status):
         self.begin += 1
         if (self.begin + state.turn_number) % 3 == 0:
-            ai_attack(self.name, "W", 4, 2, state)
+            ai_attack(self, self_status, "W", 4, 2, state)
             ai_open_discard("W", state)
         elif (self.begin + state.turn_number) % 3 == 1:
-            ai_attack(self.name, "L", 3, 1, state)
+            ai_attack(self, self_status, "L", 3, 1, state)
             ai_open_discard("A", state)
         else:
             print("Slime is wiggling around.")
@@ -53,21 +127,22 @@ class KingSlime(Enemy):
 
     def run_turn(self, state, self_status):
         if state.turn_number % 13 == 1:
-            ai_attack(self.name, "F", 100, 12, state)
+            ai_attack(self, self_status, "F", 100, 12, state)
             ai_open_discard("F", state)
             ai_open_discard("F", state)
             ai_open_discard("F", state)
         if state.turn_number % 3 == 0:
-            ai_attack(self.name, "W", 2, 2, state)
+            ai_attack(self, self_status, "W", 2, 2, state)
             ai_open_discard("W", state)
         else:
-            ai_attack(self.name, "L", 3, 1, state)
+            ai_attack(self, self_status, "L", 3, 1, state)
             ai_open_discard("A", state)
 
-def ai_attack(name, element, damage, countdown, state):
-    print("%s casts for %s %s damage in %s turn(s)!" % (name, damage, element, countdown))
+def ai_attack(enemy, status, element, damage, countdown, state):
+    actual_damage = damage + status.strength
+    print("%s casts for %s %s damage in %s turn(s)!" % (enemy.name, actual_damage, element, countdown))
     print("")
-    state.incoming_effects.append([element, damage, countdown])
+    state.incoming_effects.append([element, actual_damage, countdown])
 
 def ai_open_discard(element, state):
     if element in ["F", "W", "E"]:
