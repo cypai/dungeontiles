@@ -89,7 +89,7 @@ class Spark(Spell):
         return [(1, "I")]
 
     def find_castable(self, hand):
-        return list(map(lambda t: [t], filter(lambda x: x[1] == 1, hand)))
+        return list(map(lambda t: [t], filter(lambda x: x[0] in ["F", "W", "E"] and x[1] == 1, hand)))
 
     def cast(self, tiles, state):
         element = tiles[0][0]

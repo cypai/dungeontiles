@@ -168,7 +168,7 @@ def main_menu(state):
     menu_options = {}
     index = 1
     for spell in state.spells:
-        if not spell.tapped and len(spell.find_castable(state.hand)) > 0:
+        if not spell.tapped and not spell.exhausted and len(spell.find_castable(state.hand)) > 0:
             option = str(index) + ": " + spell.name()
             menu_options[str(index)] = spell
             print(option)
