@@ -290,12 +290,10 @@ def print_battle_status(state):
 def generate_rewards(character):
     potential_rewards = spells.elementalist_rewards()
     rewards = []
-    choice = random.choice(potential_rewards)
-    rewards.append(choice)
-    potential_rewards.remove(choice)
-    choice = random.choice(potential_rewards)
-    rewards.append(choice)
-    potential_rewards.remove(choice)
+    for i in range(0, 3):
+        choice = random.choice(potential_rewards)
+        rewards.append(choice)
+        potential_rewards.remove(choice)
     return rewards
 
 def rewards_menu(character):
@@ -305,7 +303,7 @@ def rewards_menu(character):
     index = 1
     for reward in rewards:
         menu_options[str(index)] = reward
-        print("%s: %s" % (index, reward.name()))
+        print("%s: %s %s : %s" % (index, reward.name(), reward.tile_reqs(), reward.description()))
         index += 1
     print("s: Skip")
     while True:
