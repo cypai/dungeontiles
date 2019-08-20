@@ -149,6 +149,9 @@ def draw_menu(state):
 
 def resolve_effects(state):
     state.outgoing_effects = []
+    if len(state.enemies) == 0:
+        print("You win the battle!")
+        return True
     for incoming in state.incoming_effects:
         incoming[2] -= 1
         if incoming[2] == 0:

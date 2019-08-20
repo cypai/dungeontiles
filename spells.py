@@ -139,7 +139,7 @@ class Blast(Spell):
 
     def cast(self, tiles, state):
         element = tiles[0][0]
-        state.outgoing_effects.append([element, 5, True])
+        aoe_target_menu(element, 5, state)
 
 class Explosion(Spell):
     def name(self):
@@ -157,7 +157,7 @@ class Explosion(Spell):
     def cast(self, tiles, state):
         element = tiles[0][0]
         numeric = tiles[2][1]
-        state.outgoing_effects.append([element, numeric * 3, True])
+        aoe_target_menu(element, numeric * 3, state)
         self.exhausted = True
 
 class Strike(Spell):
@@ -309,6 +309,35 @@ def nonattack_target_menu(state):
         if choice in menu_options:
             target = menu_options[choice]
             return target
+
+def aoe_target_menu(element, damage, state):
+    print("Target?")
+    print("e: All enemies")
+    print("i: Incoming attacks")
+    while True:
+        choice = input(">> ")
+        if choice == "e":
+            for enemy in state.enemies[:]:
+                actual_damage = damage
+                if element in ["F", "W", "E"] and enemy[1].elem_break[element] > 0:
+                    actual_damage = int(damage * 1.5)
+                print("%s took %s %s damage!" % (enemy[0].name, actual_damage, element))
+                enemy[0].hp -= actual_damage
+                if enemy[0].hp <= 0:
+                    print("%s was defeated!" % enemy[0].name)
+                    state.enemies.remove(enemy)
+            input("")
+            return
+        if choice == "i":
+            for incoming in state.incoming_effects[:]:
+                if damage > incoming[1]:
+                    print("Incoming attack was disrupted!")
+                    state.incoming_effects.remove(incoming)
+                else:
+                    print("Incoming attack decreased in power by %s." % damage)
+                    incoming[1] -= damage
+            input("")
+            return
 
 def elementalist_rewards():
     return [QuickInvoke(), Spark(), Ground(), DualInvoke(), Blast(), Strike(), Explosion(), RampStrike(), Split()]
