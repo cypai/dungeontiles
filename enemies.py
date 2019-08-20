@@ -42,6 +42,24 @@ class Slime(Enemy):
             ai_attack(self.name, "L", 3, 1, state)
             ai_open_discard("A", state)
 
+class KingSlime(Enemy):
+    name = "KingSlime"
+    hp = 100
+    hp_max = hp
+
+    def run_turn(self, state, self_status):
+        if state.turn_number % 13 == 1:
+            ai_attack(self.name, "F", 100, 12, state)
+            ai_open_discard("F", state)
+            ai_open_discard("F", state)
+            ai_open_discard("F", state)
+        if state.turn_number % 3 == 0:
+            ai_attack(self.name, "W", 2, 2, state)
+            ai_open_discard("W", state)
+        else:
+            ai_attack(self.name, "L", 3, 1, state)
+            ai_open_discard("A", state)
+
 def ai_attack(name, element, damage, countdown, state):
     print("%s casts for %s %s damage in %s turn(s)!" % (name, damage, element, countdown))
     print("")

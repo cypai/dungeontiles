@@ -320,7 +320,12 @@ def main():
     character = Character()
     battles_cleared = 0
     while True:
-        if battles_cleared < 4:
+        if battles_cleared > 9:
+            print("You defeated the boss! Congratulations!")
+            break
+        elif battles_cleared == 9:
+            encounter = [enemies.KingSlime()]
+        elif battles_cleared < 4:
             encounter = encounters.generate_encounter()
         else:
             encounter = encounters.generate_hard_encounter()
