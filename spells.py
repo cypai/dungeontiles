@@ -228,7 +228,8 @@ class Break(Spell):
 
     def cast(self, tiles, state):
         element = tiles[0][0]
-        state.enemy_status.elem_break[element] += 3
+        enemy, enemy_status = nonattack_target_menu(state)
+        enemy_status.elem_break[element] += 3
 
 def find_identical(amount, hand, allowed_elements=["F", "W", "E", "S", "L"]):
     count = {}
@@ -263,18 +264,20 @@ def standard_target_menu(element, damage, state):
     print("Target?")
     menu_options = {}
     index = 1
+    for enemy in state.enemies:
+        menu_options[str(index)] = enemy
+        print("%s: %s" % (index, enemy[0].name))
+        index += 1
+    incoming_index = index
     for incoming in state.incoming_effects:
         menu_options[str(index)] = incoming
         print("%s: incoming %s %s (%s turns)" % (index, incoming[0], incoming[1], incoming[2]))
         index += 1
-    enemy_index = index
-    menu_options[str(index)] = state.enemy
-    print("%s: %s" % (index, state.enemy.name))
     while True:
         choice = input(">> ")
         if choice in menu_options:
             target = menu_options[choice]
-            if int(choice) < enemy_index:
+            if int(choice) >= incoming_index:
                 if damage > target[1]:
                     print("Incoming attack was disrupted!")
                     state.incoming_effects.remove(target)
@@ -283,12 +286,29 @@ def standard_target_menu(element, damage, state):
                     target[1] -= damage
             else:
                 actual_damage = damage
-                if element in ["F", "W", "E"] and state.enemy_status.elem_break[element] > 0:
+                if element in ["F", "W", "E"] and target[1].elem_break[element] > 0:
                     actual_damage = int(damage * 1.5)
-                print("%s took %s %s damage!" % (target.name, actual_damage, element))
-                target.hp -= actual_damage
+                print("%s took %s %s damage!" % (target[0].name, actual_damage, element))
+                target[0].hp -= actual_damage
+                if target[0].hp <= 0:
+                    print("%s was defeated!" % target[0].name)
+                    state.enemies.remove(target)
             input("")
             return
+
+def nonattack_target_menu(state):
+    print("Target?")
+    menu_options = {}
+    index = 1
+    for enemy in state.enemies:
+        menu_options[str(index)] = enemy
+        print("%s: %s" % (index, enemy[0].name))
+        index += 1
+    while True:
+        choice = input(">> ")
+        if choice in menu_options:
+            target = menu_options[choice]
+            return target
 
 def elementalist_rewards():
     return [QuickInvoke(), Spark(), Ground(), DualInvoke(), Blast(), Strike(), Explosion(), RampStrike(), Split()]

@@ -28,19 +28,23 @@ class FlameTurtle(Enemy):
             ai_open_discard("F", state)
 
 class Slime(Enemy):
-    name = "Slime"
-    hp = random.randrange(9, 13)
-    hp_max = hp
-    begin = random.randrange(0, 3)
+    def __init__(self):
+        self.name = "Slime"
+        self.hp = random.randrange(9, 13)
+        self.hp_max = self.hp
+        self.begin = random.randrange(0, 3)
 
     def run_turn(self, state, self_status):
         self.begin += 1
-        if self.begin + state.turn_number % 3 == 0:
-            ai_attack(self.name, "W", 2, 2, state)
+        if (self.begin + state.turn_number) % 3 == 0:
+            ai_attack(self.name, "W", 4, 2, state)
             ai_open_discard("W", state)
-        else:
+        elif (self.begin + state.turn_number) % 3 == 1:
             ai_attack(self.name, "L", 3, 1, state)
             ai_open_discard("A", state)
+        else:
+            print("Slime is wiggling around.")
+            input("")
 
 class KingSlime(Enemy):
     name = "KingSlime"
@@ -63,7 +67,7 @@ class KingSlime(Enemy):
 def ai_attack(name, element, damage, countdown, state):
     print("%s casts for %s %s damage in %s turn(s)!" % (name, damage, element, countdown))
     print("")
-    state.incoming_effects.append(["F", 9, 2])
+    state.incoming_effects.append([element, damage, countdown])
 
 def ai_open_discard(element, state):
     if element in ["F", "W", "E"]:

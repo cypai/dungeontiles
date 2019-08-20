@@ -55,16 +55,14 @@ class Status:
     elem_break = {"F": 0, "W": 0, "E": 0, "A": 0}
 
 class State:
-    def __init__(self, character, enemy):
+    def __init__(self, character, enemies):
         self.mana = generate_mana()
         self.used_mana = []
         self.open_mana = []
         self.hand = []
         self.hp = character.hp
         self.hp_max = character.hp_max
-        self.enemy = enemy
         self.status = Status()
-        self.enemy_status = Status()
         self.outgoing_effects = []
         self.incoming_effects = []
         self.spells = character.spells
@@ -72,6 +70,7 @@ class State:
         self.full_cast_damage = 0
         self.turn_number = 0
         self.spells_casted = 0
+        self.enemies = [(e, Status()) for e in enemies]
 
 def print_hand(hand):
     elements = " ".join(map(lambda e: e[0], hand))
@@ -85,7 +84,8 @@ def wait():
 def run_turn(state):
     state.turn_number += 1
     state.spells_casted = 0
-    state.enemy.run_turn(state, state.enemy_status)
+    for enemy in state.enemies:
+        enemy[0].run_turn(state, enemy[1])
     state.open_mana = sorted_tiles(state.open_mana)
     for spell in state.spells:
         spell.tapped = False
@@ -148,26 +148,7 @@ def draw_menu(state):
             return False
 
 def resolve_effects(state):
-    for outgoing in state.outgoing_effects:
-        damage = outgoing[1]
-        shield = state.enemy_status.shield
-        if shield > 0:
-            if shield >= damage:
-                print("%s blocked %s damage!" % (state.enemy.name, damage))
-                state.enemy_status.shield -= damage
-                damage = 0
-            else:
-                print("%s blocked %s damage!" % (state.enemy.name, shield))
-                state.enemy_status.shield = 0
-                damage -= shield
-        if damage > 0:
-            state.enemy.hp -= damage
-            print("%s takes %s %s damage!" % (state.enemy.name, damage, outgoing[0]))
-            wait()
     state.outgoing_effects = []
-    if state.enemy.hp <= 0:
-        print("%s was defeated!" % state.enemy.name)
-        return True
     for incoming in state.incoming_effects:
         incoming[2] -= 1
         if incoming[2] == 0:
@@ -244,7 +225,7 @@ def spell_menu(spell, state):
                 state.hand.remove(tile)
                 state.used_mana.append(tile)
             spell.cast(menu_options[choice], state)
-            if state.enemy.hp <= 0:
+            if len(state.enemies) == 0:
                 return True
             state.hand = sorted_tiles(state.hand)
             state.spells_casted += 1
@@ -258,9 +239,10 @@ def spell_menu(spell, state):
     return False
 
 def print_battle_status(state):
-    print(state.enemy.name)
-    print("Enemy HP: " + str(state.enemy.hp))
-    print("")
+    for enemy in state.enemies:
+        print(enemy[0].name)
+        print("Enemy HP: " + str(enemy[0].hp))
+        print("")
     print("HP: " + str(state.hp))
     print("")
     print("Incoming:")
@@ -329,13 +311,13 @@ def main():
             encounter = encounters.generate_encounter()
         else:
             encounter = encounters.generate_hard_encounter()
-        state = State(character, encounter[0])
-        print("A %s approaches!" % state.enemy.name)
+        state = State(character, encounter)
+        print("Battle " + str(battles_cleared + 1))
+        input("")
         while len(state.hand) < 15:
             state.hand.append(state.mana.pop())
         while len(state.open_mana) < 9:
             state.open_mana.append(state.mana.pop())
-        state.enemy.status = {"Shield": 0}
         combat_finished = False
         while not combat_finished:
             combat_finished = run_turn(state)
