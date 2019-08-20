@@ -48,8 +48,12 @@ class Invoke(Spell):
         standard_target_menu(element, 2, state)
 
 class QuickInvoke(Spell):
-    repeatable = True
-    repeatable_max = 1
+    def __init__(self):
+        self.tapped = False
+        self.repeatable = True
+        self.repeatable_max = 1
+        self.repeatable_x = 0
+        self.exhausted = False
 
     def name(self):
         return "Quick Invoke"
@@ -68,8 +72,12 @@ class QuickInvoke(Spell):
         standard_target_menu(element, 1, state)
 
 class Spark(Spell):
-    repeatable = True
-    repeatable_max = float("inf")
+    def __init__(self):
+        self.tapped = False
+        self.repeatable = True
+        self.repeatable_max = float("inf")
+        self.repeatable_x = 0
+        self.exhausted = False
 
     def name(self):
         return "Spark"
@@ -88,8 +96,12 @@ class Spark(Spell):
         standard_target_menu(element, 1, state)
 
 class Ground(Spell):
-    repeatable = True
-    repeatable_max = 2
+    def __init__(self):
+        self.tapped = False
+        self.repeatable = True
+        self.repeatable_max = 2
+        self.repeatable_x = 0
+        self.exhausted = False
 
     def name(self):
         return "Ground"
