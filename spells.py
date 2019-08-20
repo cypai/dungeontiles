@@ -218,7 +218,7 @@ class Break(Spell):
         return "Break"
 
     def description(self):
-        return "Inflict 3 (Elemental) Break. Elemental only."
+        return "Inflict 3 (Elemental) Break. F/W/E only."
 
     def tile_reqs(self):
         return [(3, "I")]
@@ -283,7 +283,7 @@ def standard_target_menu(element, damage, state):
                     target[1] -= damage
             else:
                 actual_damage = damage
-                if state.enemy_status.elem_break[element] > 0:
+                if element in ["F", "W", "E"] and state.enemy_status.elem_break[element] > 0:
                     actual_damage = int(damage * 1.5)
                 print("%s took %s %s damage!" % (target.name, actual_damage, element))
                 target.hp -= actual_damage
