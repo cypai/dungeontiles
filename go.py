@@ -49,6 +49,10 @@ class Character:
     spells = [spells.Invoke(), spells.Strike(), spells.Blast()]
     full_cast_spells = [fullcast.ClearIncoming(), fullcast.BasicFullCast(), fullcast.SequencePower(), fullcast.TriplePower()]
 
+class Status:
+    strength = 0
+    shield = 0
+
 class State:
     def __init__(self, character, enemy):
         self.mana = generate_mana()
@@ -58,12 +62,15 @@ class State:
         self.hp = character.hp
         self.hp_max = character.hp_max
         self.enemy = enemy
+        self.status = Status()
+        self.enemy_status = Status()
         self.outgoing_effects = []
         self.incoming_effects = []
         self.spells = character.spells
         self.full_cast_spells = character.full_cast_spells
         self.full_cast_damage = 0
         self.turn_number = 0
+        self.spells_casted = 0
 
 def print_hand(hand):
     elements = " ".join(map(lambda e: e[0], hand))
@@ -76,7 +83,8 @@ def wait():
 
 def run_turn(state):
     state.turn_number += 1
-    state.enemy.run_turn(state)
+    state.spells_casted = 0
+    state.enemy.run_turn(state, state.enemy_status)
     state.open_mana = sorted_tiles(state.open_mana)
     for spell in state.spells:
         spell.tapped = False
@@ -141,15 +149,15 @@ def draw_menu(state):
 def resolve_effects(state):
     for outgoing in state.outgoing_effects:
         damage = outgoing[1]
-        shield = state.enemy.status["Shield"]
+        shield = state.enemy_status.shield
         if shield > 0:
             if shield >= damage:
                 print("%s blocked %s damage!" % (state.enemy.name, damage))
-                state.enemy.status["Shield"] -= damage
+                state.enemy_status.shield -= damage
                 damage = 0
             else:
                 print("%s blocked %s damage!" % (state.enemy.name, shield))
-                state.enemy.status["Shield"] = 0
+                state.enemy_status.shield = 0
                 damage -= shield
         if damage > 0:
             state.enemy.hp -= damage
@@ -236,6 +244,8 @@ def spell_menu(spell, state):
                 state.hand.remove(tile)
                 state.used_mana.append(tile)
             spell.cast(menu_options[choice], state)
+            state.hand = sorted_tiles(state.hand)
+            state.spells_casted += 1
             if spell.repeatable:
                 spell.repeatable_x -= 1
                 if spell.repeatable_x == 0:

@@ -8,9 +8,8 @@ class Enemy:
         name = ""
         hp = 0
         hp_max = 0
-        status = {"Shield": 0}
 
-    def run_turn(self, state):
+    def run_turn(self, state, self_status):
         pass
 
 class FlameTurtle(Enemy):
@@ -18,11 +17,11 @@ class FlameTurtle(Enemy):
     hp = 30
     hp_max = 30
 
-    def run_turn(self, state):
+    def run_turn(self, state, self_status):
         if state.turn_number % 2 == 0:
-            self.status["Shield"] += 5
+            self_status.shield += 5
             print("Flame Turtle defended itself. +5 Shield.")
-            print("Flame Turtle has %s Shield." % self.status["Shield"])
+            print("Flame Turtle has %s Shield." % self_status.shield)
             ai_open_discard("L", state)
         else:
             ai_attack(self.name, "F", 9, 2, state)
@@ -34,7 +33,7 @@ class Slime(Enemy):
     hp_max = hp
     begin = random.randrange(0, 3)
 
-    def run_turn(self, state):
+    def run_turn(self, state, self_status):
         self.begin += 1
         if self.begin + state.turn_number % 3 == 0:
             ai_attack(self.name, "W", 2, 2, state)

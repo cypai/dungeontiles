@@ -67,6 +67,26 @@ class QuickInvoke(Spell):
         element = tiles[0][0]
         standard_target_menu(element, 1, state)
 
+class Spark(Spell):
+    repeatable = True
+    repeatable_max = float("inf")
+
+    def name(self):
+        return "Spark"
+
+    def description(self):
+        return "(Component) must be a 1. Casts 1 (Elemental). (Repeatable)."
+
+    def tile_reqs(self):
+        return [(1, "I")]
+
+    def find_castable(self, hand):
+        return list(map(lambda t: [t], filter(lambda x: x[1] == 1, hand)))
+
+    def cast(self, tiles, state):
+        element = tiles[0][0]
+        standard_target_menu(element, 1, state)
+
 class Ground(Spell):
     repeatable = True
     repeatable_max = 2
@@ -132,8 +152,6 @@ class Explosion(Spell):
         return [(3, "I")]
 
     def find_castable(self, hand):
-        if self.exhausted:
-            return []
         return find_identical(3, hand)
 
     def cast(self, tiles, state):
@@ -158,6 +176,42 @@ class Strike(Spell):
     def cast(self, tiles, state):
         element = tiles[0][0]
         standard_target_menu(element, 7, state)
+
+class RampStrike(Spell):
+    def name(self):
+        return "Ramp Strike"
+
+    def description(self):
+        return "Casts 3 (Elemental). Increases damage by 1 per spell cast this turn."
+
+    def tile_reqs(self):
+        return [(3, "S")]
+
+    def find_castable(self, hand):
+        return find_sequences(3, hand)
+
+    def cast(self, tiles, state):
+        element = tiles[0][0]
+        standard_target_menu(element, 1 + state.spells_casted, state)
+
+class Split(Spell):
+    def name(self):
+        return "Split"
+
+    def description(self):
+        return "Split an Elemental tile into 1s."
+
+    def tile_reqs(self):
+        return [(1, "S")]
+
+    def find_castable(self, hand):
+        return list(map(lambda t: [t], filter(lambda x: x[0] in ["F", "W", "E"], hand)))
+
+    def cast(self, tiles, state):
+        element, number = tiles[0]
+        while len(state.hand) < 15 and number > 0:
+            number -= 1
+            state.hand.append((element, 1))
 
 def find_identical(amount, hand):
     count = {}
@@ -217,4 +271,4 @@ def standard_target_menu(element, damage, state):
 
 
 def elementalist_rewards():
-    return [QuickInvoke(), Ground(), DualInvoke(), Blast(), Strike(), Explosion()]
+    return [QuickInvoke(), Spark(), Ground(), DualInvoke(), Blast(), Strike(), Explosion(), RampStrike(), Split()]
