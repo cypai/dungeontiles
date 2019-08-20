@@ -46,12 +46,13 @@ class Character:
     name = "Elementalist"
     hp = 80
     hp_max = 80
-    spells = [spells.Invoke(), spells.Strike(), spells.Blast()]
+    spells = [spells.Invoke(), spells.Strike(), spells.Break()]
     full_cast_spells = [fullcast.ClearIncoming(), fullcast.BasicFullCast(), fullcast.SequencePower(), fullcast.TriplePower()]
 
 class Status:
     strength = 0
     shield = 0
+    elem_break = {"F": 0, "W": 0, "E": 0, "A": 0}
 
 class State:
     def __init__(self, character, enemy):

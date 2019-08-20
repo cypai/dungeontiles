@@ -213,13 +213,31 @@ class Split(Spell):
             number -= 1
             state.hand.append((element, 1))
 
-def find_identical(amount, hand):
+class Break(Spell):
+    def name(self):
+        return "Break"
+
+    def description(self):
+        return "Inflict 3 (Elemental) Break. Elemental only."
+
+    def tile_reqs(self):
+        return [(3, "I")]
+
+    def find_castable(self, hand):
+        return find_identical(3, hand, ["F", "W", "E"])
+
+    def cast(self, tiles, state):
+        element = tiles[0][0]
+        state.enemy_status.elem_break[element] += 3
+
+def find_identical(amount, hand, allowed_elements=["F", "W", "E", "S", "L"]):
     count = {}
     for tile in hand:
-        if tile in count:
-            count[tile] += 1
-        else:
-            count[tile] = 1
+        if tile[0] in allowed_elements:
+            if tile in count:
+                count[tile] += 1
+            else:
+                count[tile] = 1
     return list(map(lambda j: [j[0]] * amount, filter(lambda i: i[1] >= amount, count.items())))
 
 def find_sequences(amount, hand):
@@ -264,11 +282,13 @@ def standard_target_menu(element, damage, state):
                     print("Incoming attack decreased in power by %s." % damage)
                     target[1] -= damage
             else:
-                print("%s took %s %s damage!" % (target.name, damage, element))
-                target.hp -= damage
+                actual_damage = damage
+                if state.enemy_status.elem_break[element] > 0:
+                    actual_damage = int(damage * 1.5)
+                print("%s took %s %s damage!" % (target.name, actual_damage, element))
+                target.hp -= actual_damage
             input("")
             return
-
 
 def elementalist_rewards():
     return [QuickInvoke(), Spark(), Ground(), DualInvoke(), Blast(), Strike(), Explosion(), RampStrike(), Split()]
