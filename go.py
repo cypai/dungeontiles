@@ -207,8 +207,7 @@ def main_menu(state):
             return True
         if choice in menu_options:
             spell = menu_options[choice]
-            spell_menu(spell, state)
-            return False
+            return spell_menu(spell, state)
 
 def can_full_cast(hand):
     if len(hand) % 3 != 0:
@@ -245,6 +244,8 @@ def spell_menu(spell, state):
                 state.hand.remove(tile)
                 state.used_mana.append(tile)
             spell.cast(menu_options[choice], state)
+            if state.enemy.hp <= 0:
+                return True
             state.hand = sorted_tiles(state.hand)
             state.spells_casted += 1
             if spell.repeatable:
@@ -254,6 +255,7 @@ def spell_menu(spell, state):
             else:
                 spell.tapped = True
             break
+    return False
 
 def print_battle_status(state):
     print(state.enemy.name)
