@@ -53,6 +53,8 @@ class Status:
     strength = 0
     shield = 0
     elem_break = {"F": 0, "W": 0, "E": 0, "A": 0}
+    dragon = None
+    dragon_scale = None
 
 class State:
     def __init__(self, character, enemies):
@@ -100,6 +102,8 @@ def run_turn(state):
     first_elemental = False
     while len(state.hand) < 15:
         tile = state.mana.pop()
+        if state.status.dragon_scale is not None:
+            tile = (state.status.dragon_scale, tile[1])
         if not first_elemental and tile[0] in ["F", "W", "E"]:
             first_elemental = True
             state.hand.append((tile[0], int(input("Set number for tile %s %s: " % tile))))
@@ -112,6 +116,9 @@ def run_turn(state):
         end_turn = main_menu(state)
         if end_turn:
             break
+    if state.status.dragon is not None:
+        print("The Dragon attacks!")
+        state.outgoing_effects.append([state.status.dragon, 12, 1])
     return resolve_effects(state)
 
 def sorted_tiles(tiles):
@@ -148,6 +155,19 @@ def draw_menu(state):
             return False
 
 def resolve_effects(state):
+    for outgoing in state.outgoing_effects[:]:
+        outgoing[2] -= 1
+        if outgoing[2] == 0:
+            state.outgoing_effects.remove(outgoing)
+            element, actual_damage = outgoing[0], outgoing[1]
+            for target in state.enemies:
+                if element in ["F", "W", "E"] and target[1].elem_break[element] > 0:
+                    actual_damage = int(damage * 1.5)
+                print("%s took %s %s damage!" % (target[0].name, actual_damage, element))
+                target[0].hp -= actual_damage
+                if target[0].hp <= 0:
+                    print("%s was defeated!" % target[0].name)
+                    state.enemies.remove(target)
     state.outgoing_effects = []
     if len(state.enemies) == 0:
         print("You win the battle!")
@@ -300,6 +320,27 @@ def rewards_menu(character):
             character.spells.append(reward)
             return
 
+def dragon_menu(character):
+    print("A huge dragon rears up in front of you!")
+    print("But instead of a fight, it asks you for what you want.")
+    print("1: Power! (Gain Dragonbreath: Cast 25 (Elemental) (AOE))")
+    print("2: Charisma! (Gain Summon Dragon: Summon an (Elemental) Dragon, which does 12 AOE damage to all enemies at the end of your turn.)")
+    print("3: Intelligence! (Gain Dragon Scale: Drawn Elemental Tiles transform their element to (Elemental)")
+    print("s: Skip")
+    while True:
+        choice = input(">> ")
+        if choice in ["s", "n"]:
+            return
+        if choice == "1":
+            character.spells.append(spells.Dragonbreath())
+            return
+        if choice == "2":
+            character.spells.append(spells.SummonDragon())
+            return
+        if choice == "3":
+            character.spells.append(spells.DragonScale())
+            return
+
 def main():
     clear()
     character = Character()
@@ -310,6 +351,10 @@ def main():
             break
         elif battles_cleared == 9:
             encounter = [enemies.KingSlime()]
+        elif battles_cleared == 4:
+            dragon_menu(character)
+            battles_cleared += 1
+            continue
         elif battles_cleared < 4:
             encounter = encounters.generate_encounter()
         else:

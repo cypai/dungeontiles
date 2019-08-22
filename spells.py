@@ -243,6 +243,57 @@ class Break(Spell):
         enemy, enemy_status = nonattack_target_menu(state)
         enemy_status.elem_break[element] += 3
 
+class Dragonbreath(Spell):
+    def name(self):
+        return "Dragonbreath"
+
+    def description(self):
+        return "Cast 25 (Elemental) (AOE)."
+
+    def tile_reqs(self):
+        return [(9, "S")]
+
+    def find_castable(self, hand):
+        return find_sequences(9, hand)
+
+    def cast(self, tiles, state):
+        element = tiles[0][0]
+        aoe_target_menu(element, 25, state)
+
+class SummonDragon(Spell):
+    def name(self):
+        return "Summon Dragon"
+
+    def description(self):
+        return "Summon an (Elemental) Dragon, which does 12 AOE damage to all enemies at the end of your turn."
+
+    def tile_reqs(self):
+        return [(9, "S")]
+
+    def find_castable(self, hand):
+        return find_sequences(9, hand)
+
+    def cast(self, tiles, state):
+        element = tiles[0][0]
+        state.status.dragon = element
+
+class DragonScale(Spell):
+    def name(self):
+        return "Dragon Scale"
+
+    def description(self):
+        return "Drawn Elemental Tiles transform their element to (Elemental)."
+
+    def tile_reqs(self):
+        return [(9, "S")]
+
+    def find_castable(self, hand):
+        return find_sequences(9, hand)
+
+    def cast(self, tiles, state):
+        element = tiles[0][0]
+        state.status.dragon_scale = element
+
 def find_identical(amount, hand, allowed_elements=["F", "W", "E", "S", "L"]):
     count = {}
     for tile in hand:
