@@ -26,10 +26,10 @@ class BasicFullCast(FullCastSpell):
         return "Basic Full Cast"
 
     def description(self):
-        return "Base Power: 15"
+        return "Base Power: 30"
 
     def cast(self, hand, state):
-        state.full_cast_damage += 15
+        state.full_cast_damage += 30
 
 class SequencePower(FullCastSpell):
     def name(self):
