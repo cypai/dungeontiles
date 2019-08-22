@@ -118,6 +118,50 @@ class Ground(Spell):
     def cast(self, tiles, state):
         pass
 
+class Bump(Spell):
+    def name(self):
+        return "Bump"
+
+    def description(self):
+        return "Transform a tile into its (Successor)."
+
+    def tile_reqs(self):
+        return [(1, "I")]
+
+    def find_castable(self, hand):
+        return list(map(lambda t: [t], hand))
+
+    def cast(self, tiles, state):
+        element, number = tiles[0]
+        if element in ["F", "W", "E"]:
+            state.hand.append((element, number + 1 if number < 9 else 1))
+        elif element == "S":
+            state.hand.append((element, number + 3 if number < 9 else 0))
+        elif element == "L":
+            state.hand.append((element, number + 4 if number < 9 else 1))
+
+class Nudge(Spell):
+    def name(self):
+        return "Nudge"
+
+    def description(self):
+        return "Transform a tile into its (Predecessor)."
+
+    def tile_reqs(self):
+        return [(1, "I")]
+
+    def find_castable(self, hand):
+        return list(map(lambda t: [t], hand))
+
+    def cast(self, tiles, state):
+        element, number = tiles[0]
+        if element in ["F", "W", "E"]:
+            state.hand.append((element, number - 1 if number > 1 else 9))
+        elif element == "S":
+            state.hand.append((element, number - 3 if number > 0 else 9))
+        elif element == "L":
+            state.hand.append((element, number - 4 if number > 1 else 9))
+
 class DualInvoke(Spell):
     def name(self):
         return "Dual Invoke"
@@ -403,4 +447,4 @@ def aoe_target_menu(element, damage, state):
             return
 
 def elementalist_rewards():
-    return [QuickInvoke(), Spark(), Ground(), DualInvoke(), Blast(), Strike(), Explosion(), RampStrike(), Split()]
+    return [QuickInvoke(), Spark(), Ground(), DualInvoke(), Blast(), Strike(), Explosion(), RampStrike(), Split(), Bump(), Nudge()]
