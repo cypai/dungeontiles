@@ -360,6 +360,9 @@ def main():
         else:
             encounter = encounters.generate_hard_encounter()
         state = State(character, encounter)
+        for spell in character.spells:
+            if spell.exhausted:
+                spell.exhausted = False
         print("Battle " + str(battles_cleared + 1))
         input("")
         while len(state.hand) < 15:
