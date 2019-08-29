@@ -44,7 +44,7 @@ class Cow(Enemy):
             print("Cow uses Rollout!")
             ai_attack(self, self_status, "L", 8 + self.rollout, 1, state)
             ai_open_discard("L", state)
-            rollout += 3
+            self.rollout += 3
 
 class Bull(Enemy):
     def __init__(self):
